@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to right, #1f4037, #99f2c8);
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+        }
+
+        h1 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            color: #eaeaea;
+            margin-top: 1.5rem;
+        }
+
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-img-top {
+            border-radius: 15px 15px 0 0;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(to right, #2575fc, #6a11cb);
+        }
+
+        .modal-header {
+            background-color: #333;
+            color: white;
+            border-bottom: 2px solid #6a11cb;
+        }
+
+        .modal-body {
+            font-size: 1.1rem;
+        }
+
+        .d-flex button {
+            width: 40px;
+        }
+
+        .container {
+            margin-top: 3rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .card {
+                margin-bottom: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <h1>Available Dishes</h1>
+
+        {% for hotel, dishes in hotel_dishes.items %}
+            <h2>{{ hotel.h_Name }}</h2>
+            <div class="row justify-content-center">
+                {% for dish in dishes %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm">
+                            <img src="{{ dish.d_Photo.url }}" class="card-img-top" alt="{{ dish.d_Name }}">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ dish.d_Name }}</h5>
+                                <p class="card-text">{{ dish.d_Description }}</p>
+                                <p class="card-text"><strong>Price:</strong> ₹{{ dish.d_Price }}</p>
+                                <button class="btn btn-primary order-now-btn mt-3" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#orderModal"
+                                        data-photo="{{ dish.d_Photo.url }}"
+                                        data-name="{{ dish.d_Name }}"
+                                        data-description="{{ dish.d_Description }}"
+                                        data-price="{{ dish.d_Price }}">
+                                    Order Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Order Modal -->
+    <div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderModalLabel">Order Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalPhoto" src="" class="img-fluid rounded mb-3" alt="" style="height: 200px;">
+                    <h5 id="modalName"></h5>
+                    <p id="modalDescription"></p>
+                    <p><strong>Price: ₹</strong><span id="modalPrice"></span></p>
+                    <h3>Item Count: <span id="itemCount">0</span></h3>
+                    <div class="d-flex justify-content-center bg-success border rounded" style="width: 120px;">
+                        <button class="btn text-white" id="decreaseCountBtn">-</button>
+                        <button class="btn text-white" id="increaseCountBtn">+</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="confirmOrderBtn">Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let itemCount = 0;
+        const itemCountDisplay = document.getElementById('itemCount');
+        const increaseCountBtn = document.getElementById('increaseCountBtn');
+        const decreaseCountBtn = document.getElementById('decreaseCountBtn');
+        const modalPhoto = document.getElementById('modalPhoto');
+        const modalName = document.getElementById('modalName');
+        const modalDescription = document.getElementById('modalDescription');
+        const modalPrice = document.getElementById('modalPrice');
+        const confirmOrderBtn = document.getElementById('confirmOrderBtn');
+
+        increaseCountBtn.addEventListener('click', () => {
+            itemCount++;
+            itemCountDisplay.textContent = itemCount;
+        });
+
+        decreaseCountBtn.addEventListener('click', () => {
+            if (itemCount > 0) {
+                itemCount--;
+                itemCountDisplay.textContent = itemCount;
+            }
+        });
+
+        document.querySelectorAll('.order-now-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                modalPhoto.src = button.getAttribute('data-photo');
+                modalName.textContent = button.getAttribute('data-name');
+                modalDescription.textContent = button.getAttribute('data-description');
+                modalPrice.textContent = button.getAttribute('data-price');
+                itemCount = 0;
+                itemCountDisplay.textContent = itemCount;
+            });
+        });
+
+        confirmOrderBtn.addEventListener('click', () => {
+            const orderDetails = {
+                name: modalName.textContent,
+                price: modalPrice.textContent,
+                count: itemCount
+            };
+            const queryString = new URLSearchParams(orderDetails).toString();
+            localStorage.setItem('orderDetails', JSON.stringify(orderDetails));
+
+    // Redirect to the payment page
+    const paymentUrl = `/payment/payment?${queryString}`;
+    window.location.href = paymentUrl;
+            {% comment %} window.location.href = `/payment/payment?${queryString}`; {% endcomment %}
+            
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
